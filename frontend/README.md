@@ -2,13 +2,12 @@
 
 ## Setup
 1. Pastikan Node.js sudah terpasang
-2. Buka terminal:
-    // Admin
+2. Buka terminal admin:
    - `cd .../frontend/admin-app`
    - `npm install`
    - `npm run dev`
    - buka `http://localhost:3001/`
-    // Kiosk
+3. Buka terminal kiok:
    - `cd .../frontend/kiosk-app`
    - `npm install`
    - `npm run dev`
