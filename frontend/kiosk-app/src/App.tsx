@@ -29,6 +29,19 @@ export default function App() {
   const [currentScreen, setCurrentScreen] = useState<ScreenType>("INITIAL_WELCOME");
   const [selectedPoly, setSelectedPoly] = useState<Poliklinik | null>(null);
   const [isPolySelectorOpen, setIsPolySelectorOpen] = useState(false);
+  const [selectPolyAlert, setSelectPolyAlert] = useState<string | null>(null);
+  
+  // Start registration handler: if no poly selected, open selector first
+  const handleStartRegistration = () => {
+    if (!selectedPoly) {
+      setIsPolySelectorOpen(true);
+      setSelectPolyAlert("Silakan pilih poli terlebih dahulu");
+      // auto-dismiss after a short delay
+      window.setTimeout(() => setSelectPolyAlert(null), 3500);
+    } else {
+      setCurrentScreen("METHOD_CHOICE");
+    }
+  };
   
   // Storage for currently entered patient data
   const [patientData, setPatientData] = useState<PatientInfo>({ ...DEFAULT_PATIENT });
@@ -62,7 +75,8 @@ export default function App() {
           <WelcomeScreen
             selectedPoly={selectedPoly}
             onOpenPolySelector={() => setIsPolySelectorOpen(true)}
-            onStartRegistration={() => setCurrentScreen("METHOD_CHOICE")}
+            onStartRegistration={handleStartRegistration}
+            alertMessage={selectPolyAlert}
           />
         );
 
@@ -71,8 +85,9 @@ export default function App() {
           <WelcomeScreen
             selectedPoly={selectedPoly}
             onOpenPolySelector={() => setIsPolySelectorOpen(true)}
-            onStartRegistration={() => setCurrentScreen("METHOD_CHOICE")}
+            onStartRegistration={handleStartRegistration}
             isPsikiatriSpecial={true}
+            alertMessage={selectPolyAlert}
           />
         );
 
@@ -136,6 +151,7 @@ export default function App() {
             title="Pendaftaran Biometrik Wajah"
             isRegistrationFlow={true}
             onBack={() => setCurrentScreen("REGISTER_FORM")}
+            onManual={() => setCurrentScreen("REGISTER_FORM")}
             onScanComplete={(url) => {
               setPatientData((prev) => ({ ...prev, photoUrl: url }));
               setCurrentScreen("REGISTRATION_REVIEW");
@@ -149,7 +165,7 @@ export default function App() {
             selectedPoly={selectedPoly}
             patientData={patientData}
             onBack={() => setCurrentScreen("REGISTER_FORM")}
-            onRetakeFacePhoto={() => setCurrentScreen("GENERAL_FACE_SCAN")}
+            onRetakeFacePhoto={() => setCurrentScreen("FACE_REGISTRATION")}
             onConfirm={() => setCurrentScreen("TICKET_CONFIRMATION")}
           />
         );
@@ -159,6 +175,7 @@ export default function App() {
           <FaceScanView
             selectedPoly={selectedPoly}
             onBack={() => setCurrentScreen("LOGIN_CHOICE")}
+            onManual={() => setCurrentScreen("MANUAL_FORM")}
             onScanComplete={(url) => {
               setPatientData((prev) => ({ ...prev, photoUrl: url }));
               // Check if they came from Registration Review
@@ -176,7 +193,7 @@ export default function App() {
           <ConfirmationScreen
             selectedPoly={selectedPoly}
             patientData={patientData}
-            onCancel={handleReset}
+            onCancel={() => setCurrentScreen("LOGIN_CHOICE")}
             onConfirm={() => setCurrentScreen("SUCCESS_PAGE")}
           />
         );
@@ -195,7 +212,8 @@ export default function App() {
           <WelcomeScreen
             selectedPoly={selectedPoly}
             onOpenPolySelector={() => setIsPolySelectorOpen(true)}
-            onStartRegistration={() => setCurrentScreen("METHOD_CHOICE")}
+            onStartRegistration={handleStartRegistration}
+            alertMessage={selectPolyAlert}
           />
         );
     }

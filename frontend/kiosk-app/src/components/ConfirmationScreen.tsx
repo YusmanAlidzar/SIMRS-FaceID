@@ -40,7 +40,7 @@ export default function ConfirmationScreen({
               className="inline-flex items-center gap-2 px-4 py-2 bg-white text-slate-700 hover:text-slate-900 border border-slate-200 rounded-full text-xs font-semibold hover:bg-slate-50 transition cursor-pointer shadow-xs"
             >
               <ArrowLeft className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span className="font-display">Batal</span>
+              <span className="font-display">Kembali</span>
             </button>
           }
         />

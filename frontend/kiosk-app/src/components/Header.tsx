@@ -12,10 +12,11 @@ export default function Header({ selectedPoly, onReset, rightElement }: HeaderPr
   return (
     <header className="w-full flex items-center justify-between pb-6 border-b border-slate-100 mb-8" id="kiosk-app-header">
       {/* Left Capsule: RSUD Logo */}
-      <div 
-        onClick={onReset}
-        className="flex items-center gap-2.5 px-4 py-2 bg-white rounded-full border border-slate-200 shadow-xs cursor-pointer hover:bg-slate-50 transition-all"
+      <div
         id="header-logo-capsule"
+        className="flex items-center gap-2.5 px-4 py-2 bg-white rounded-full border border-slate-200 shadow-xs"
+        aria-hidden="true"
+        tabIndex={-1}
       >
         <div className="w-7 h-7 rounded-full bg-emerald-500 flex items-center justify-center text-white">
           <HeartPulse className="w-4.5 h-4.5" />

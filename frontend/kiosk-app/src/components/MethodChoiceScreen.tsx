@@ -63,13 +63,13 @@ export default function MethodChoiceScreen({
 
               <div className="space-y-2">
                 <h3 className="text-xl font-bold font-display text-slate-800 flex items-center gap-2">
-                  <span>Log in</span>
+                  <span>Masuk Pasien Terdaftar</span>
                   <span className="text-[10px] font-mono px-2 py-0.5 bg-teal-50 text-teal-700 border border-teal-150 rounded-full font-bold">
                     SUDAH TERDAFTAR
                   </span>
                 </h3>
                 <p className="text-slate-400 text-xs leading-relaxed font-sans">
-                  Gunakan pemindaian biometric Face ID instan jika Anda sudah pernah melakukan pendaftaran data diri di unit Kiosk sebelumnya.
+                  Pilih masuk dengan Face ID cepat atau isi data manual jika sebelumnya belum memiliki rekam biometrik.
                 </p>
               </div>
 
@@ -81,11 +81,11 @@ export default function MethodChoiceScreen({
               </div>
             </div>
 
-            {/* Action Card 2: Sign In (Daftar Baru) */}
+            {/* Action Card 2: Register New Account */}
             <div 
               onClick={onSelectRegister}
               className="p-8 bg-white border border-slate-200 hover:border-cyan-500 rounded-3xl cursor-pointer hover:shadow-xl transition-all group flex flex-col gap-6 text-left relative overflow-hidden"
-              id="btn-sign-in-choice-trigger"
+              id="btn-register-choice-trigger"
             >
               <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/5 rounded-full translate-x-12 -translate-y-12"></div>
 
@@ -95,20 +95,20 @@ export default function MethodChoiceScreen({
 
               <div className="space-y-2">
                 <h3 className="text-xl font-bold font-display text-slate-800 flex items-center gap-2">
-                  <span>Sign in</span>
+                  <span>Daftar Akun Baru</span>
                   <span className="text-[10px] font-mono px-2 py-0.5 bg-cyan-50 text-cyan-700 border border-cyan-150 rounded-full font-bold">
-                    PASIEN BARU
+                    BELUM TERDAFTAR
                   </span>
                 </h3>
                 <p className="text-slate-400 text-xs leading-relaxed font-sans">
-                  Registrasi baru menggunakan data KTP dan simpan pemindaian Face ID baru Anda untuk kunjungan rumah sakit berikutnya yang lebih instan.
+                  Buat akun baru dengan mengisi data KTP dan pemindaian Face ID untuk kunjungan selanjutnya.
                 </p>
               </div>
 
               <div className="pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-medium">
-                <span className="group-hover:text-cyan-600 transition">Registrasi Data & Foto</span>
+                <span className="group-hover:text-cyan-600 transition">Pendaftaran & Face ID Baru</span>
                 <span className="text-cyan-600 font-bold group-hover:translate-x-1 transition flex items-center gap-1">
-                  Isi Formulir <UserPlus className="w-4.5 h-4.5" />
+                  Daftar Sekarang <UserPlus className="w-4.5 h-4.5" />
                 </span>
               </div>
             </div>

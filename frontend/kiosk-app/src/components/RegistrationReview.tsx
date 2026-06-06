@@ -59,7 +59,7 @@ export default function RegistrationReview({
                   src={patientData.photoUrl} 
                   alt="Review biometrik wajah" 
                   referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover scale-x-[-1]"
+                  className="w-full h-full object-cover"
                   id="target-biometric-snapshot"
                 />
                 
