@@ -1,36 +1,71 @@
-import React, { useState } from 'react';
-import { Patient, Visit, NotificationItem } from '../types';
+import React, { useState } from "react";
+import { Patient, Visit, NotificationItem } from "../types";
 
 interface DashboardViewProps {
   patients: Patient[];
   visits: Visit[];
   notifications: NotificationItem[];
+  searchQuery: string;
   onOpenAddPatient: () => void;
   onClearNotification: (id: string) => void;
   onViewPatientDetails: (patient: Patient, visit?: Visit) => void;
-  onTabChange: (tab: 'dashboard' | 'visits' | 'patients') => void;
+  onTabChange: (tab: "dashboard" | "visits" | "patients") => void;
 }
 
 export default function DashboardView({
   patients,
   visits,
   notifications,
+  searchQuery,
   onOpenAddPatient,
   onClearNotification,
   onViewPatientDetails,
-  onTabChange
+  onTabChange,
 }: DashboardViewProps) {
-  const [selectedPoliFilter, setSelectedPoliFilter] = useState('Semua Poli');
+  const [selectedPoliFilter, setSelectedPoliFilter] = useState("Semua Poli");
 
-  // Filter latest visits based on selected poliklinik dropdown
+  // Filter latest visits based on selected poliklinik dropdown and search query
   const filteredVisitsForLatest = visits.filter((visit) => {
-    if (selectedPoliFilter === 'Semua Poli') return true;
-    return visit.poliklinik.toLowerCase().includes(selectedPoliFilter.toLowerCase()) || 
-           visit.poliklinik.replace('Poli ', '').toLowerCase() === selectedPoliFilter.toLowerCase();
+    const matchesPoliFilter =
+      selectedPoliFilter === "Semua Poli" ||
+      visit.poliklinik
+        .toLowerCase()
+        .includes(selectedPoliFilter.toLowerCase()) ||
+      visit.poliklinik.replace("Poli ", "").toLowerCase() ===
+        selectedPoliFilter.toLowerCase();
+
+    const normalizedSearch = searchQuery.trim().toLowerCase();
+    const matchesSearch =
+      !normalizedSearch ||
+      visit.id.toLowerCase().includes(normalizedSearch) ||
+      visit.patientName.toLowerCase().includes(normalizedSearch) ||
+      visit.doctor.toLowerCase().includes(normalizedSearch) ||
+      visit.poliklinik.toLowerCase().includes(normalizedSearch) ||
+      visit.status.toLowerCase().includes(normalizedSearch);
+
+    return matchesPoliFilter && matchesSearch;
   });
 
   // Unique list of poliklinik for display
-  const poliList = ['Semua Poli', 'Poli Penyakit Dalam', 'Poli Anak', 'Poli Kandungan', 'UGD', 'Poli Umum', 'Poli Gigi'];
+  const poliList = [
+    "Semua Poli",
+    "Poli Umum",
+    "Poli Anak",
+    "Poli Kandungan",
+    "Poli Penyakit Dalam",
+    "Poli Jantung",
+    "Poli Orthopedi",
+    "Poli Saraf",
+    "Poli Gigi",
+    "Poli Mata",
+    "Poli THT",
+    "Poli Kulit & Kelamin",
+    "Poli Psikiatri",
+  ];
+
+  const todayDate = new Date().toISOString().split("T")[0];
+  const totalPatients = patients.length;
+  const visitsToday = visits.filter((visit) => visit.date === todayDate).length;
 
   // Safe Print Action Function helper
   const handlePrintReport = () => {
@@ -42,9 +77,12 @@ export default function DashboardView({
       {/* Welcome & Navigation bar */}
       <section className="flex flex-col md:flex-row md:items-end justify-between gap-4">
         <div>
-          <h3 className="text-3xl font-bold text-primary tracking-tight">Ringkasan Dashboard</h3>
+          <h3 className="text-3xl font-bold text-primary tracking-tight">
+            Ringkasan Dashboard
+          </h3>
           <p className="text-sm text-on-surface-variant mt-1">
-            Selamat datang kembali, pantau operasional rumah sakit secara real-time.
+            Selamat datang kembali, pantau operasional rumah sakit secara
+            real-time.
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -59,80 +97,70 @@ export default function DashboardView({
       </section>
 
       {/* Stats Bento Grid */}
-      <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Total Pasien */}
-        <div className="glass-card p-5 rounded-2xl flex flex-col gap-3 relative overflow-hidden group hover:shadow-md transition-shadow">
-          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-105 transition-transform duration-200">
-            <span className="material-symbols-outlined text-[24px]">person</span>
+        <div className="glass-card p-3 rounded-2xl flex flex-col gap-2 relative overflow-hidden group hover:shadow-lg transition-shadow">
+          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-105 transition-transform duration-200">
+            <span className="material-symbols-outlined text-[20px]">
+              person
+            </span>
           </div>
           <div>
-            <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Total Pasien</p>
-            <h4 className="text-3xl font-black text-on-surface mt-1">
-              {(12835 + patients.length).toLocaleString('id-ID')}
+            <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wide">
+              Total Pasien
+            </p>
+            <h4 className="text-2xl font-black text-on-surface mt-1">
+              {totalPatients.toLocaleString("id-ID")}
             </h4>
           </div>
-          <div className="flex items-center gap-1 text-xs text-primary font-bold mt-1">
-            <span className="material-symbols-outlined text-[16px]">trending_up</span>
-            <span>4.2% dari bulan lalu</span>
+          <div className="flex items-center gap-1.5 text-[10px] text-primary font-semibold mt-1">
+            <span className="material-symbols-outlined text-[16px]">
+              trending_up
+            </span>
+            <span>
+              {totalPatients > 0 ? `${totalPatients} pasien` : "Tidak ada data"}
+            </span>
           </div>
         </div>
 
         {/* Kunjungan Hari Ini */}
-        <div className="glass-card p-5 rounded-2xl flex flex-col gap-3 relative overflow-hidden group hover:shadow-md transition-shadow">
-          <div className="w-12 h-12 rounded-full bg-secondary-container/30 flex items-center justify-center text-secondary group-hover:scale-105 transition-transform duration-200">
-            <span className="material-symbols-outlined text-[24px]">calendar_today</span>
+        <div className="glass-card p-3 rounded-2xl flex flex-col gap-2 relative overflow-hidden group hover:shadow-lg transition-shadow">
+          <div className="w-10 h-10 rounded-full bg-secondary-container/30 flex items-center justify-center text-secondary group-hover:scale-105 transition-transform duration-200">
+            <span className="material-symbols-outlined text-[20px]">
+              calendar_today
+            </span>
           </div>
           <div>
-            <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Kunjungan Hari Ini</p>
-            <h4 className="text-3xl font-black text-on-surface mt-1">
-              {visits.length + 338}
+            <p className="text-[11px] font-bold text-on-surface-variant uppercase tracking-wide">
+              Kunjungan Hari Ini
+            </p>
+            <h4 className="text-2xl font-black text-on-surface mt-1">
+              {visitsToday}
             </h4>
           </div>
-          <div className="flex items-center gap-1 text-xs text-secondary font-bold mt-1">
-            <span className="material-symbols-outlined text-[16px]">check_circle</span>
-            <span>85% Selesai dilayani</span>
-          </div>
-        </div>
-
-        {/* Kapasitas Bed */}
-        <div className="glass-card p-5 rounded-2xl flex flex-col gap-3 relative overflow-hidden group hover:shadow-md transition-shadow">
-          <div className="w-12 h-12 rounded-full bg-tertiary-container/10 flex items-center justify-center text-tertiary group-hover:scale-105 transition-transform duration-200">
-            <span className="material-symbols-outlined text-[24px]">bed</span>
-          </div>
-          <div>
-            <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Kapasitas Bed</p>
-            <h4 className="text-3xl font-black text-on-surface mt-1">82%</h4>
-          </div>
-          <div className="w-full bg-outline-variant/30 h-2 rounded-full mt-2 overflow-hidden">
-            <div className="bg-tertiary h-full rounded-full w-[82%]"></div>
-          </div>
-        </div>
-
-        {/* Pendapatan Harian */}
-        <div className="glass-card p-5 rounded-2xl flex flex-col gap-3 border-l-4 border-primary relative overflow-hidden group hover:shadow-md transition-shadow">
-          <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary group-hover:scale-105 transition-transform duration-200">
-            <span className="material-symbols-outlined text-[24px]">payments</span>
-          </div>
-          <div>
-            <p className="text-xs font-bold text-on-surface-variant uppercase tracking-wider">Pendapatan (IDR)</p>
-            <h4 className="text-3xl font-black text-on-surface mt-1">42.5M</h4>
-          </div>
-          <div className="flex items-center gap-1 text-xs text-outline mt-1">
-            <span className="material-symbols-outlined text-[16px]">update</span>
-            <span>Terakhir diupdate 10 menit lalu</span>
+          <div className="flex items-center gap-1.5 text-[10px] text-secondary font-semibold mt-1">
+            <span className="material-symbols-outlined text-[16px]">
+              check_circle
+            </span>
+            <span>
+              {visitsToday > 0
+                ? `${visitsToday} kunjungan`
+                : "Belum ada kunjungan"}
+            </span>
           </div>
         </div>
       </section>
 
       {/* Main Content Layout (Asymmetric) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
         {/* Left column: Recent Patients */}
         <section className="lg:col-span-2 flex flex-col gap-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <h5 className="text-lg font-bold text-on-surface">Daftar Pasien Terbaru</h5>
-              
+              <h5 className="text-lg font-bold text-on-surface">
+                Daftar Pasien Terbaru
+              </h5>
+
               {/* Dropdown Filter */}
               <div className="relative inline-block text-left">
                 <select
@@ -151,9 +179,9 @@ export default function DashboardView({
                 </span>
               </div>
             </div>
-            
+
             <button
-              onClick={() => onTabChange('visits')}
+              onClick={() => onTabChange("visits")}
               className="text-primary text-xs font-bold hover:underline cursor-pointer"
             >
               Lihat Semua
@@ -166,63 +194,95 @@ export default function DashboardView({
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-primary text-white">
-                    <th className="px-5 py-3 text-xs font-bold uppercase tracking-wider">No. RM</th>
-                    <th className="px-5 py-3 text-xs font-bold uppercase tracking-wider">Nama Pasien</th>
-                    <th className="px-5 py-3 text-xs font-bold uppercase tracking-wider">Poli / Unit</th>
-                    <th className="px-5 py-3 text-xs font-bold uppercase tracking-wider">Status</th>
-                    <th className="px-5 py-3 text-xs font-bold uppercase tracking-wider">Waktu</th>
+                    <th className="px-5 py-3 text-xs font-bold uppercase tracking-wider">
+                      No. RM
+                    </th>
+                    <th className="px-5 py-3 text-xs font-bold uppercase tracking-wider">
+                      Nama Pasien
+                    </th>
+                    <th className="px-5 py-3 text-xs font-bold uppercase tracking-wider">
+                      Poli / Unit
+                    </th>
+                    <th className="px-5 py-3 text-xs font-bold uppercase tracking-wider">
+                      Status
+                    </th>
+                    <th className="px-5 py-3 text-xs font-bold uppercase tracking-wider">
+                      Waktu
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-outline-variant/30">
                   {filteredVisitsForLatest.length === 0 ? (
                     <tr>
-                      <td colSpan={5} className="px-5 py-8 text-center text-sm text-outline">
-                        Tidak ada catatan kunjungan hari ini untuk poliklinik tersebut
+                      <td
+                        colSpan={5}
+                        className="px-5 py-8 text-center text-sm text-outline"
+                      >
+                        Tidak ada catatan kunjungan hari ini untuk poliklinik
+                        tersebut
                       </td>
                     </tr>
                   ) : (
                     filteredVisitsForLatest.slice(0, 5).map((visit) => {
                       // Link visit to a patient if possible
-                      const patientRecord = patients.find(p => p.id === visit.patientId) || {
+                      const patientRecord = patients.find(
+                        (p) => p.id === visit.patientId,
+                      ) || {
                         id: visit.patientId,
                         name: visit.patientName,
                         gender: visit.gender,
                         age: visit.age,
-                        address: 'Data Alamat Tersembunyi',
-                        status: 'Outpatient' as const,
-                        registeredDate: '2023-10-24'
+                        address: "Data Alamat Tersembunyi",
+                        status: "Outpatient" as const,
+                        registeredDate: visit.date || new Date().toISOString().substring(0, 10),
                       };
 
                       // Map string status to appropriate badges from html template
-                      let badgeStyle = 'bg-secondary-fixed text-on-secondary-fixed';
-                      if (visit.status === 'Gawat') {
-                        badgeStyle = 'bg-error-container text-on-error-container';
-                      } else if (visit.status === 'Diperiksa' || visit.status === 'Pemeriksaan') {
-                        badgeStyle = 'bg-primary-fixed text-on-primary-fixed-variant';
-                      } else if (visit.status === 'Selesai') {
-                        badgeStyle = 'bg-secondary-container text-on-secondary-container';
-                      } else if (visit.status === 'Menunggu') {
-                        badgeStyle = 'bg-tertiary-fixed text-on-tertiary-fixed-variant';
+                      let badgeStyle =
+                        "bg-secondary-fixed text-on-secondary-fixed";
+                      if (visit.status === "Gawat") {
+                        badgeStyle =
+                          "bg-error-container text-on-error-container";
+                      } else if (
+                        visit.status === "Diperiksa" ||
+                        visit.status === "Pemeriksaan"
+                      ) {
+                        badgeStyle =
+                          "bg-primary-fixed text-on-primary-fixed-variant";
+                      } else if (visit.status === "Selesai") {
+                        badgeStyle =
+                          "bg-secondary-container text-on-secondary-container";
+                      } else if (visit.status === "Menunggu") {
+                        badgeStyle =
+                          "bg-tertiary-fixed text-on-tertiary-fixed-variant";
                       }
 
                       return (
                         <tr
                           key={visit.id}
-                          onClick={() => onViewPatientDetails(patientRecord, visit)}
+                          onClick={() =>
+                            onViewPatientDetails(patientRecord, visit)
+                          }
                           className="hover:bg-secondary-container/20 transition-colors cursor-pointer group"
                         >
                           <td className="px-5 py-4 text-xs font-mono font-bold text-primary group-hover:underline">
                             {visit.id}
                           </td>
                           <td className="px-5 py-4">
-                            <div className="text-sm font-semibold text-on-surface">{visit.patientName}</div>
-                            <div className="text-[11px] text-outline mt-0.5">{visit.gender}, {visit.age}</div>
+                            <div className="text-sm font-semibold text-on-surface">
+                              {visit.patientName}
+                            </div>
+                            <div className="text-[11px] text-outline mt-0.5">
+                              {visit.gender}, {visit.age}
+                            </div>
                           </td>
                           <td className="px-5 py-4 text-xs font-medium text-on-surface-variant">
                             {visit.poliklinik}
                           </td>
                           <td className="px-5 py-4">
-                            <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider inline-block ${badgeStyle}`}>
+                            <span
+                              className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider inline-block ${badgeStyle}`}
+                            >
                               {visit.status}
                             </span>
                           </td>
@@ -241,7 +301,6 @@ export default function DashboardView({
 
         {/* Right column: Action Guides & Widgets */}
         <aside className="flex flex-col gap-6">
-          
           {/* Healthcare Hero Card / Clinic Image with overlaid details */}
           <div className="relative h-48 rounded-2xl overflow-hidden shadow-md group border border-outline-variant/40">
             <img
@@ -252,9 +311,16 @@ export default function DashboardView({
             />
             {/* Overlay */}
             <div className="absolute inset-0 bg-gradient-to-t from-primary/95 via-primary/40 to-transparent flex flex-col justify-end p-5">
-              <span className="text-[10px] uppercase font-mono font-bold tracking-widest text-[#93f2f2] mb-1">PENGUMUMAN</span>
-              <p className="text-white font-bold text-lg leading-tight">Informasi Lab Penting</p>
-              <p className="text-white/85 text-xs mt-1 leading-relaxed">Hasil tes laboratorium tersedia lebih cepat hari ini melalui server utama.</p>
+              <span className="text-[10px] uppercase font-mono font-bold tracking-widest text-[#93f2f2] mb-1">
+                PENGUMUMAN
+              </span>
+              <p className="text-white font-bold text-lg leading-tight">
+                Informasi Lab Penting
+              </p>
+              <p className="text-white/85 text-xs mt-1 leading-relaxed">
+                Hasil tes laboratorium tersedia lebih cepat hari ini melalui
+                server utama.
+              </p>
             </div>
           </div>
 
@@ -268,7 +334,7 @@ export default function DashboardView({
                 </span>
               )}
             </h5>
-            
+
             <div className="flex flex-col gap-3">
               {notifications.length === 0 ? (
                 <div className="p-4 text-center rounded-xl bg-surface-container/40 text-xs text-outline border border-dashed border-outline-variant/60">
@@ -280,19 +346,27 @@ export default function DashboardView({
                     key={item.id}
                     className="flex gap-3 items-start p-2.5 rounded-xl hover:bg-surface-container transition-all group relative border border-outline-variant/20 bg-white/50"
                   >
-                    <div className={`w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0 ${item.type === 'urgent' ? 'bg-error animate-pulse' : 'bg-primary'}`}></div>
+                    <div
+                      className={`w-2.5 h-2.5 rounded-full mt-1.5 flex-shrink-0 ${item.type === "urgent" ? "bg-error animate-pulse" : "bg-primary"}`}
+                    ></div>
                     <div className="flex-1">
-                      <p className="text-xs font-bold text-on-surface leading-tight">{item.title}</p>
-                      <p className="text-[11px] text-on-surface-variant mt-1 leading-normal">{item.description}</p>
+                      <p className="text-xs font-bold text-on-surface leading-tight">
+                        {item.title}
+                      </p>
+                      <p className="text-[11px] text-on-surface-variant mt-1 leading-normal">
+                        {item.description}
+                      </p>
                     </div>
-                    
+
                     {/* Clear button */}
                     <button
                       onClick={() => onClearNotification(item.id)}
                       className="text-outline/40 hover:text-error transition-colors p-1"
                       title="Selesai / Sembunyikan"
                     >
-                      <span className="material-symbols-outlined text-sm">close</span>
+                      <span className="material-symbols-outlined text-sm">
+                        close
+                      </span>
                     </button>
                   </div>
                 ))
@@ -303,13 +377,23 @@ export default function DashboardView({
           {/* Daily Clinic Advisory and Tips Card */}
           <div className="bg-secondary-container p-5 rounded-2xl border border-[#c8e7d8] flex flex-col gap-3">
             <div className="flex items-center gap-2 text-on-secondary-container">
-              <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>
+              <span
+                className="material-symbols-outlined text-xl"
+                style={{ fontVariationSettings: "'FILL' 1" }}
+              >
                 lightbulb
               </span>
-              <h6 className="text-[11px] font-bold uppercase tracking-wider">Tips Efisiensi Medis</h6>
+              <h6 className="text-[11px] font-bold uppercase tracking-wider">
+                Tips Efisiensi Medis
+              </h6>
             </div>
             <p className="text-xs text-on-secondary-container font-medium leading-relaxed">
-              Gunakan modul <strong className="text-primary font-bold">"Data Pasien"</strong> &amp; <strong className="text-primary font-bold">"Add Patient"</strong> untuk meregistrasi rujukan lama guna memangkas antrian pagi loket pendaftaran.
+              Gunakan modul{" "}
+              <strong className="text-primary font-bold">"Data Pasien"</strong>{" "}
+              &amp;{" "}
+              <strong className="text-primary font-bold">"Add Patient"</strong>{" "}
+              untuk meregistrasi rujukan lama guna memangkas antrian pagi loket
+              pendaftaran.
             </p>
           </div>
         </aside>

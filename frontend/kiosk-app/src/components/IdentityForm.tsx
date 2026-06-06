@@ -20,11 +20,21 @@ export default function IdentityForm({
   onSubmit,
   onGoToFaceScan,
 }: IdentityFormProps) {
-  const [formData, setFormData] = useState<PatientInfo>({
-    ...initialData,
-    poly: selectedPoly ? selectedPoly.name : "Umum",
-    dokter: selectedPoly ? selectedPoly.dokter : "dr. H. Ahmad Fauzi, M.Kes",
-  });
+  const emptyPatient: PatientInfo = {
+    nama: "",
+    nik: "",
+    tanggalLahir: "",
+    jenisKelamin: "",
+    telepon: "",
+    alamat: "",
+    photoUrl: "",
+    poly: selectedPoly ? selectedPoly.name : "",
+    dokter: selectedPoly ? selectedPoly.dokter : "",
+  };
+
+  const [formData, setFormData] = useState<PatientInfo>(
+    (mode === "REGISTER" || mode === "MANUAL_LOGIN") ? emptyPatient : { ...initialData, poly: selectedPoly ? selectedPoly.name : "Umum", dokter: selectedPoly ? selectedPoly.dokter : "dr. H. Ahmad Fauzi, M.Kes" }
+  );
 
   const [errors, setErrors] = useState<Partial<Record<keyof PatientInfo, string>>>({});
 
@@ -36,7 +46,7 @@ export default function IdentityForm({
       newErrors.nik = "NIK harus terdiri dari 16 digit angka";
     }
     if (!formData.tanggalLahir) newErrors.tanggalLahir = "Tanggal lahir wajib dipilih";
-    if (formData.jenisKelamin === "" || formData.jenisKelamin === "Pilih Jenis Kelamin") {
+    if (formData.jenisKelamin === "") {
       newErrors.jenisKelamin = "Jenis kelamin wajib dipilih";
     }
     if (!formData.telepon.trim() || formData.telepon.length < 10) {
@@ -50,7 +60,12 @@ export default function IdentityForm({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    let newValue = value;
+    if (name === "nik") {
+      // enforce numeric-only for NIK
+      newValue = value.replace(/\D/g, "");
+    }
+    setFormData((prev) => ({ ...prev, [name]: newValue }));
     if (errors[name as keyof PatientInfo]) {
       setErrors((prev) => ({ ...prev, [name]: undefined }));
     }
@@ -59,7 +74,11 @@ export default function IdentityForm({
   const handleManualSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
-    onSubmit(formData);
+    if (mode === "REGISTER" && onGoToFaceScan) {
+      onGoToFaceScan(formData);
+    } else {
+      onSubmit(formData);
+    }
   };
 
   const handleFaceScanTransition = () => {
@@ -97,7 +116,7 @@ export default function IdentityForm({
                 PASIEN {mode === "MANUAL_LOGIN" ? "TERDAFTAR (MANUAL)" : "BARU"}
               </span>
               <h2 className="text-2xl font-black font-display text-slate-800">
-                {mode === "MANUAL_LOGIN" ? "Ketik Identitas Pasien" : "Registrasi Akun Baru"}
+                {mode === "MANUAL_LOGIN" ? "Identitas Pasien" : "Registrasi Akun Baru"}
               </h2>
               <p className="text-slate-400 text-xs font-sans">
                 Lengkapi formulir identitas di bawah ini untuk memperoleh struk antrean pelayanan klinis.
@@ -146,6 +165,8 @@ export default function IdentityForm({
                 type="text"
                 name="nik"
                 maxLength={16}
+                inputMode="numeric"
+                pattern="[0-9]*"
                 placeholder="16 digit nomor identitas"
                 value={formData.nik}
                 onChange={handleInputChange}
@@ -191,9 +212,9 @@ export default function IdentityForm({
                 }`}
                 id="select-form-jenis-kelamin"
               >
-                <option>Pilih Jenis Kelamin</option>
-                <option value="Laki-laki">Laki-laki (L)</option>
-                <option value="Perempuan">Perempuan (P)</option>
+                <option value="">Pilih Jenis Kelamin</option>
+                <option value="L">Laki-laki (L)</option>
+                <option value="P">Perempuan (P)</option>
               </select>
               {errors.jenisKelamin && <p className="text-[10px] font-semibold text-rose-500 font-sans mt-1">{errors.jenisKelamin}</p>}
             </div>
@@ -257,17 +278,7 @@ export default function IdentityForm({
               <div className="flex flex-col sm:flex-row gap-3">
                 
                 {/* Specific option if REGISTER MODE: allows Pilih Face ID */}
-                {mode === "REGISTER" && (
-                  <button 
-                    type="button"
-                    onClick={handleFaceScanTransition}
-                    className="px-6 py-3 bg-cyan-50 text-cyan-700 border border-cyan-100 hover:bg-cyan-100 font-bold rounded-xl text-sm transition cursor-pointer inline-flex items-center justify-center gap-2"
-                    id="btn-form-pilih-face-id"
-                  >
-                    <Camera className="w-4.5 h-4.5" />
-                    <span>Pilih Face ID</span>
-                  </button>
-                )}
+                {/* Face ID flow now invoked via Save & Continue for REGISTER mode */}
 
                 {/* Primary Button */}
                 <button 

@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { NotificationItem } from '../types';
+import React, { useState } from "react";
+import { NotificationItem } from "../types";
 
 interface HeaderProps {
   title: string;
   onSearchChange: (query: string) => void;
   searchPlaceholder?: string;
-  userRole: { name: string; title: string; avatarUrl: string };
+  userRole: { username: string; avatarUrl: string };
   notifications: NotificationItem[];
   onClearNotification?: (id: string) => void;
 }
@@ -16,10 +16,10 @@ export default function Header({
   searchPlaceholder = "Cari pasien atau poli...",
   userRole,
   notifications,
-  onClearNotification
+  onClearNotification,
 }: HeaderProps) {
   const [showNotifications, setShowNotifications] = useState(false);
-  const [searchValue, setSearchValue] = useState('');
+  const [searchValue, setSearchValue] = useState("");
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchValue(e.target.value);
@@ -34,10 +34,13 @@ export default function Header({
           {title}
         </h2>
         <div className="h-6 w-[1px] bg-outline-variant hidden sm:block"></div>
-        
+
         {/* Dynamic Search */}
         <div className="hidden md:flex relative items-center bg-surface-container rounded-full px-4 py-1.5 border border-outline-variant w-full focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20 transition-all max-w-md">
-          <span className="material-symbols-outlined text-outline text-xl mr-2 pointer-events-none" style={{ fontVariationSettings: "'FILL' 0" }}>
+          <span
+            className="material-symbols-outlined text-outline text-xl mr-2 pointer-events-none"
+            style={{ fontVariationSettings: "'FILL' 0" }}
+          >
             search
           </span>
           <input
@@ -50,8 +53,8 @@ export default function Header({
           {searchValue && (
             <button
               onClick={() => {
-                setSearchValue('');
-                onSearchChange('');
+                setSearchValue("");
+                onSearchChange("");
               }}
               className="text-outline hover:text-primary transition-colors text-xs p-1"
             >
@@ -69,7 +72,9 @@ export default function Header({
             onClick={() => setShowNotifications(!showNotifications)}
             className="w-10 h-10 rounded-full hover:bg-surface-container-high/60 flex items-center justify-center text-on-surface-variant transition-all hover:scale-105 relative cursor-pointer"
           >
-            <span className="material-symbols-outlined text-[24px]">notifications</span>
+            <span className="material-symbols-outlined text-[24px]">
+              notifications
+            </span>
             {notifications.length > 0 && (
               <span className="absolute top-1.5 right-1.5 w-4 h-4 bg-error text-white text-[9px] font-black rounded-full flex items-center justify-center animate-bounce">
                 {notifications.length}
@@ -93,19 +98,32 @@ export default function Header({
                   </div>
                 ) : (
                   notifications.map((item) => (
-                    <div key={item.id} className="p-3 hover:bg-surface-container/30 transition-colors flex gap-2.5 items-start">
-                      <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${item.type === 'urgent' ? 'bg-error' : 'bg-primary'}`}></div>
+                    <div
+                      key={item.id}
+                      className="p-3 hover:bg-surface-container/30 transition-colors flex gap-2.5 items-start"
+                    >
+                      <div
+                        className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${item.type === "urgent" ? "bg-error" : "bg-primary"}`}
+                      ></div>
                       <div className="flex-1">
-                        <p className="text-xs font-semibold text-on-surface line-clamp-1">{item.title}</p>
-                        <p className="text-[11px] text-outline mt-0.5 leading-tight">{item.description}</p>
-                        <span className="text-[9px] text-outline/50 mt-1 block">{item.time}</span>
+                        <p className="text-xs font-semibold text-on-surface line-clamp-1">
+                          {item.title}
+                        </p>
+                        <p className="text-[11px] text-outline mt-0.5 leading-tight">
+                          {item.description}
+                        </p>
+                        <span className="text-[9px] text-outline/50 mt-1 block">
+                          {item.time}
+                        </span>
                       </div>
                       {onClearNotification && (
                         <button
                           onClick={() => onClearNotification(item.id)}
                           className="text-outline/50 hover:text-error text-xs p-1"
                         >
-                          <span className="material-symbols-outlined text-sm">close</span>
+                          <span className="material-symbols-outlined text-sm">
+                            close
+                          </span>
                         </button>
                       )}
                     </div>
@@ -116,15 +134,7 @@ export default function Header({
           )}
         </div>
 
-        {/* Help Center Popover Trigger */}
-        <button className="w-10 h-10 rounded-full hover:bg-surface-container-high/60 flex items-center justify-center text-on-surface-variant transition-all hover:scale-105 cursor-pointer">
-          <span className="material-symbols-outlined text-[24px]">help</span>
-        </button>
-
-        {/* Vertical divider */}
-        <div className="h-8 w-[1px] bg-outline-variant mx-1"></div>
-
-        {/* Profile Card Info with doctor name */}
+        {/* Profile Card Info with doctor username */}
         <div className="flex items-center gap-2 pl-2 rounded-full hover:bg-surface-container p-1 transition-colors cursor-pointer group">
           <div className="w-9 h-9 rounded-full overflow-hidden border-2 border-primary-container shadow-sm flex-shrink-0">
             <img
@@ -135,8 +145,9 @@ export default function Header({
             />
           </div>
           <div className="text-left hidden lg:block leading-none pr-2">
-            <p className="text-xs font-bold text-on-surface group-hover:text-primary transition-colors">{userRole.name}</p>
-            <p className="text-[10px] text-on-surface-variant mt-0.5">{userRole.title}</p>
+            <p className="text-xs font-bold text-on-surface group-hover:text-primary transition-colors">
+              {userRole.username}
+            </p>
           </div>
         </div>
       </div>
