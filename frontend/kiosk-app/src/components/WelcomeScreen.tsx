@@ -9,6 +9,7 @@ interface WelcomeScreenProps {
   onOpenPolySelector: () => void;
   onStartRegistration: () => void;
   isPsikiatriSpecial?: boolean;
+  alertMessage?: string | null;
 }
 
 export default function WelcomeScreen({
@@ -16,6 +17,7 @@ export default function WelcomeScreen({
   onOpenPolySelector,
   onStartRegistration,
   isPsikiatriSpecial = false,
+  alertMessage = null,
 }: WelcomeScreenProps) {
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col justify-between p-6 md:p-10" id="welcome-screen-container">
@@ -34,6 +36,14 @@ export default function WelcomeScreen({
             ) : null
           }
         />
+
+        {/* Inline alert when user tries to start without selecting poly */}
+        {alertMessage && (
+          <div id="select-poly-alert" className="max-w-6xl mx-auto mt-4 mb-2 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-sm font-medium flex items-center gap-2">
+            <AlertCircle className="w-4 h-4" />
+            <span>{alertMessage}</span>
+          </div>
+        )}
 
         {/* Main Content Body */}
         <div className="grid md:grid-cols-2 gap-10 items-center my-auto py-6" id="welcome-main-layout">
