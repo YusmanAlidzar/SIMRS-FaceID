@@ -101,11 +101,14 @@ export default function KunjunganHarianView({
     label,
     value:
       chartMode === "average"
-        ? averageHourlyCounts[label]
-        : hourlyCountsToday[label],
+        ? (averageHourlyCounts[label] ?? 0)
+        : (hourlyCountsToday[label] ?? 0),
   }));
 
-  const maxChartValue = Math.max(...chartData.map((item) => item.value), 1);
+  const maxChartValue = Math.max(
+    ...chartData.map((item) => item.value ?? 0),
+    1,
+  );
 
   const distributionCounts = visitsByDate.reduce(
     (acc, visit) => {
@@ -379,7 +382,8 @@ export default function KunjunganHarianView({
                     age: visit.age,
                     address: "Data Alamat Tersembunyi",
                     status: "Outpatient" as const,
-                    registeredDate: visit.date || new Date().toISOString().substring(0, 10),
+                    registeredDate:
+                      visit.date || new Date().toISOString().substring(0, 10),
                   };
 
                   let statusBadgeStyle =
@@ -503,7 +507,7 @@ export default function KunjunganHarianView({
               return (
                 <div
                   key={point.label}
-                  className="w-full bg-[#bdc9c8]/30 rounded-t-lg relative group cursor-pointer hover:bg-surface-container-high/40 transition-colors"
+                  className="flex-1 bg-[#bdc9c8]/30 rounded-t-lg relative group cursor-pointer hover:bg-surface-container-high/40 transition-colors"
                   title={`${point.value} kunjungan pada ${point.label}`}
                 >
                   <div
