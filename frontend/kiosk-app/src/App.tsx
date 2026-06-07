@@ -86,10 +86,10 @@ export default function App() {
     return gender === "L" || gender === "l" ? "Laki-laki" : gender === "P" || gender === "p" ? "Perempuan" : gender;
   };
 
-  const handleRegisterAndQueue = async () => {
+  const handleRegisterAndQueue = async (skipTicketPage = false) => {
     if (!selectedPoly) {
       setCurrentScreen("INITIAL_WELCOME");
-      return;
+      return false;
     }
 
     setIsSubmitting(true);
@@ -130,12 +130,29 @@ export default function App() {
         visitTime: queueResponse.ticket?.visitTime,
         ticketDoctor: queueResponse.ticket?.doctor,
       }));
-      setCurrentScreen('TICKET_CONFIRMATION');
+
+      if (!skipTicketPage) {
+        setCurrentScreen('TICKET_CONFIRMATION');
+      }
+      return true;
     } catch (error) {
       console.error('Failed to register and queue patient:', error);
       window.alert('Gagal menghubungkan ke server. Silakan coba lagi.');
+      return false;
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const handleConfirmTicket = async () => {
+    if (patientData.ticketId && patientData.queueNumber) {
+      setCurrentScreen('SUCCESS_PAGE');
+      return;
+    }
+
+    const succeeded = await handleRegisterAndQueue(true);
+    if (succeeded) {
+      setCurrentScreen('SUCCESS_PAGE');
     }
   };
 
@@ -267,7 +284,7 @@ export default function App() {
             selectedPoly={selectedPoly}
             patientData={patientData}
             onCancel={() => setCurrentScreen("LOGIN_CHOICE")}
-            onConfirm={() => setCurrentScreen("SUCCESS_PAGE")}
+            onConfirm={handleConfirmTicket}
           />
         );
 
