@@ -89,7 +89,7 @@ export default function App() {
           poliklinik: item.poliklinik || "Poli Umum",
           doctor: item.doctor || "",
           status: item.status || "Antri",
-          date: item.visitDate || queueData.date || new Date().toISOString().split("T")[0],
+          date: item.date || queueData.date || new Date().toISOString().split("T")[0],
         }));
 
         if (!isMounted) return;

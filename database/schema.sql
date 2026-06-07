@@ -1,90 +1,76 @@
--- Create database
-CREATE DATABASE IF NOT EXISTS simrs_faceid;
-USE simrs_faceid;
+-- Hapus tabel jika sudah ada agar tidak bentrok
+DROP TABLE IF EXISTS visits;
+DROP TABLE IF EXISTS patients;
+DROP TABLE IF EXISTS poliklinik;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS notifications;
 
--- Users table
+-- Tabel Users
 CREATE TABLE users (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  username VARCHAR(100) UNIQUE NOT NULL,
-  password VARCHAR(255) NOT NULL,
-  role ENUM('admin', 'doctor', 'receptionist') DEFAULT 'receptionist',
-  name VARCHAR(100) NOT NULL,
-  email VARCHAR(100),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  username TEXT UNIQUE NOT NULL,
+  password TEXT NOT NULL,
+  role TEXT DEFAULT 'receptionist',
+  name TEXT NOT NULL,
+  email TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- Patients table
+-- Tabel Patients
 CREATE TABLE patients (
-  id VARCHAR(50) PRIMARY KEY,
-  name VARCHAR(100) NOT NULL,
-  nik VARCHAR(20) UNIQUE,
-  gender ENUM('Laki-laki', 'Perempuan') NOT NULL,
-  age INT,
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  nik TEXT UNIQUE,
+  gender TEXT NOT NULL,
+  age INTEGER,
   birth_date DATE,
   address TEXT,
-  phone VARCHAR(20),
-  photo_url VARCHAR(255),
-  status ENUM('Inpatient', 'Outpatient', 'Critical', 'Discharged') DEFAULT 'Outpatient',
-  registered_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  face_encoding LONGTEXT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  phone TEXT,
+  photo_url TEXT,
+  status TEXT DEFAULT 'Outpatient',
+  registered_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+  face_encoding TEXT,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- Poliklinik table
+-- Tabel Poliklinik
 CREATE TABLE poliklinik (
-  id VARCHAR(50) PRIMARY KEY,
-  name VARCHAR(100) NOT NULL,
-  code VARCHAR(10) UNIQUE NOT NULL,
-  doctor_name VARCHAR(100) NOT NULL,
-  icon VARCHAR(50),
-  description TEXT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  id TEXT PRIMARY KEY,
+  name TEXT NOT NULL,
+  code TEXT UNIQUE NOT NULL,
+  doctor_name TEXT NOT NULL,
+  icon TEXT,
+  description TEXT
 );
 
--- Visits table
+-- Tabel Visits
 CREATE TABLE visits (
-  id VARCHAR(50) PRIMARY KEY,
-  patient_id VARCHAR(50) NOT NULL,
-  poliklinik_id VARCHAR(50) NOT NULL,
-  doctor_id INT,
-  visit_time TIME,
-  visit_date DATE NOT NULL,
-  status ENUM('Antri', 'Pemeriksaan', 'Selesai', 'Menunggu', 'Gawat', 'Diperiksa') DEFAULT 'Antri',
-  notes TEXT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  ticket_id TEXT UNIQUE NOT NULL,
+  patient_id TEXT NOT NULL,
+  poliklinik_id TEXT NOT NULL,
+  doctor_id INTEGER,
+  queue_number TEXT NOT NULL,
+  status TEXT DEFAULT 'Menunggu',
+  visit_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+  visit_time TEXT DEFAULT CURRENT_TIME,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (patient_id) REFERENCES patients(id),
   FOREIGN KEY (poliklinik_id) REFERENCES poliklinik(id),
-  FOREIGN KEY (doctor_id) REFERENCES users(id),
-  INDEX idx_date (visit_date),
-  INDEX idx_patient (patient_id)
+  FOREIGN KEY (doctor_id) REFERENCES users(id)
 );
 
--- Daily statistics table
-CREATE TABLE daily_statistics (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  visit_date DATE NOT NULL,
-  poliklinik_id VARCHAR(50),
-  total_visits INT DEFAULT 0,
-  completed_visits INT DEFAULT 0,
-  pending_visits INT DEFAULT 0,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (poliklinik_id) REFERENCES poliklinik(id),
-  UNIQUE KEY unique_daily_poly (visit_date, poliklinik_id)
-);
-
--- Notifications table
+-- Tabel Notifications
 CREATE TABLE notifications (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  title VARCHAR(255) NOT NULL,
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  title TEXT NOT NULL,
   description TEXT,
-  type ENUM('urgent', 'info') DEFAULT 'info',
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  INDEX idx_type (type)
+  type TEXT DEFAULT 'info',
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
--- Insert default poliklinik data
+-- Masukkan Data Poliklinik Default
 INSERT INTO poliklinik (id, name, code, doctor_name, icon, description) VALUES
 ('poly-umum', 'Poli Umum', 'UMM', 'dr. H. Ahmad Fauzi, M.Kes', 'Stethoscope', 'Pemeriksaan umum dan penanganan keluhan pertama pasien.'),
 ('poly-anak', 'Poli Anak', 'ANK', 'dr. Andi Wijaya, Sp.A', 'Baby', 'Spesialis kesehatan bayi, anak-anak, dan tumbuh kembang.'),
@@ -93,4 +79,8 @@ INSERT INTO poliklinik (id, name, code, doctor_name, icon, description) VALUES
 ('poly-jantung', 'Poli Jantung', 'JNT', 'dr. Siska Amelia, Sp.JP', 'Activity', 'Layanan spesialis diagnosis dan terapi jantung & pembuluh darah.'),
 ('poly-orthopedi', 'Poli Orthopedi', 'ORT', 'dr. Hendra Pratama, Sp.OT', 'Bone', 'Perawatan cedera tulang, sendi, otot, dan ligamen rangka.'),
 ('poly-saraf', 'Poli Saraf', 'SRF', 'dr. Rian Hidayat, Sp.N', 'Brain', 'Diagnosis dan penanganan gangguan otak, saraf, dan sumsum.'),
-('poly-gigi', 'Poli Gigi', 'GIG', 'drg. Fitria Lestari', 'Smile', 'Pelayanan kebersihan mulut, gigi berlubang, dan ortodonsi.');
+('poly-gigi', 'Poli Gigi', 'GIG', 'drg. Fitria Lestari', 'Smile', 'Pelayanan kebersihan mulut, gigi berlubang, dan ortodonsi.'),
+('poly-mata', 'Poli Mata', 'MAT', 'dr. Yusuf Hamdan, Sp.M', 'Eye', 'Spesialisasi gangguan penglihatan, katarak, dan kacamata.'),
+('poly-tht', 'Poli THT', 'THT', 'dr. Dina Mariana, Sp.THT-KL', 'Ear', 'Pemeriksaan hidung, tenggorokan, dan fungsi pendengaran.'),
+('poly-kulit', 'Poli Kulit & Kelamin', 'KK', 'dr. Susan Anggraini, Sp.DV', 'Sparkles', 'Layanan terapi kecantikan kulit, alergi, dan infeksi luar.'),
+('poly-psikiatri', 'Poli Psikiatri', 'PSI', 'dr. Ridwan Chaniago, Sp.KJ', 'HeartHandshake', 'Konsultasi kesehatan jiwa, konseling stress, dan depresi.');

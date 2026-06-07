@@ -25,6 +25,17 @@ const generateQueueTicket = async (req, res) => {
 
       const patient = patients[0];
 
+      const [polikliniks] = await connection.query(
+        'SELECT id, name, doctor_name FROM poliklinik WHERE id = ?',
+        [poliklinik_id]
+      );
+
+      if (polikliniks.length === 0) {
+        return res.status(400).json({ error: 'Invalid poliklinik selected' });
+      }
+
+      const poliklinik = polikliniks[0];
+
       // Get today's queue count for this poliklinik
       const [queueStats] = await connection.query(
         'SELECT COUNT(*) as count FROM visits WHERE poliklinik_id = ? AND DATE(visit_date) = ?',
@@ -37,32 +48,32 @@ const generateQueueTicket = async (req, res) => {
 
       // Create visit record
       const [result] = await connection.query(
-        `INSERT INTO visits (id, patient_id, poliklinik_id, visit_time, visit_date, status)
-         VALUES (?, ?, ?, ?, ?, ?)`,
-        [ticketId, patient_id, poliklinik_id, visitTime, visit_date, 'Antri']
+        `INSERT INTO visits (ticket_id, patient_id, poliklinik_id, queue_number, visit_date, visit_time, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?)`,
+        [ticketId, patient_id, poliklinik_id, queueNumber, visit_date, visitTime, 'Menunggu']
       );
 
       // Get poliklinik info
-      const [polikliniks] = await connection.query(
+      const [poliklinikRows] = await connection.query(
         'SELECT name, doctor_name FROM poliklinik WHERE id = ?',
         [poliklinik_id]
       );
 
-      const poliklinik = polikliniks[0] || {};
+      const poliklinikInfo = poliklinikRows[0] || {};
 
       res.status(201).json({
         success: true,
         message: 'Queue ticket generated successfully',
         ticket: {
-          ticketId: ticketId,
-          queueNumber: queueNumber,
+          ticketId,
+          queueNumber,
           patientName: patient.name,
           gender: patient.gender,
           age: patient.age,
-          poliklinik: poliklinik.name,
-          doctor: poliklinik.doctor_name,
+          poliklinik: poliklinikInfo.name,
+          doctor: poliklinikInfo.doctor_name,
           visitDate: visit_date,
-          visitTime: visitTime,
+          visitTime,
           status: 'Antri'
         }
       });
@@ -71,7 +82,9 @@ const generateQueueTicket = async (req, res) => {
     }
   } catch (error) {
     console.error('Generate queue ticket error:', error);
-    res.status(500).json({ error: 'Server error' });
+    console.error('Request body:', req.body);
+    console.error(error.stack);
+    res.status(500).json({ error: 'Server error', details: error.message });
   }
 };
 
@@ -90,9 +103,9 @@ const getQueueByPoliklinik = async (req, res) => {
     try {
       const [visits] = await connection.query(`
         SELECT 
-          v.id as ticketId,
+          v.ticket_id as ticketId,
           v.patient_id as patientId,
-          SUBSTR(v.id, -3) as queueNumber,
+          v.queue_number as queueNumber,
           p.name as patientName,
           p.gender,
           p.age,
@@ -131,9 +144,9 @@ const getCurrentQueue = async (req, res) => {
 
       const [visits] = await connection.query(`
         SELECT 
-          v.id as ticketId,
+          v.ticket_id as ticketId,
           v.patient_id as patientId,
-          SUBSTR(v.id, -3) as queueNumber,
+          v.queue_number as queueNumber,
           p.name as patientName,
           p.gender,
           p.age,
@@ -184,8 +197,8 @@ const getPatientTicket = async (req, res) => {
     try {
       const [visits] = await connection.query(`
         SELECT 
-          v.id as ticketId,
-          SUBSTR(v.id, -3) as queueNumber,
+          v.ticket_id as ticketId,
+          v.queue_number as queueNumber,
           p.name as patientName,
           p.gender,
           p.age,
@@ -198,7 +211,7 @@ const getPatientTicket = async (req, res) => {
         FROM visits v
         LEFT JOIN patients p ON v.patient_id = p.id
         LEFT JOIN poliklinik pk ON v.poliklinik_id = pk.id
-        WHERE v.id = ?
+        WHERE v.ticket_id = ?
       `, [ticket_id]);
 
       if (visits.length === 0) {
@@ -234,11 +247,11 @@ const updateQueueStatus = async (req, res) => {
     const connection = await getConnection();
     try {
       const [result] = await connection.query(
-        'UPDATE visits SET status = ? WHERE id = ?',
+        'UPDATE visits SET status = ? WHERE ticket_id = ?',
         [status, ticket_id]
       );
 
-      if (result.changes === 0) {
+      if (result.affectedRows === 0) {
         return res.status(404).json({ error: 'Ticket not found' });
       }
 
