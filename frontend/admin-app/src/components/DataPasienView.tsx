@@ -6,7 +6,7 @@ interface DataPasienViewProps {
   visits: Visit[];
   searchQuery: string;
   onSearchQueryChange: (query: string) => void;
-  onAddPatient: (newPatient: Patient) => void;
+  onAddPatient: (newPatient: Patient) => Promise<void>;
   onViewPatientDetails: (patient: Patient, visit?: Visit) => void;
   showAddPatientModal: boolean;
   onCloseAddPatientModal: () => void;
@@ -42,7 +42,7 @@ export default function DataPasienView({
   const [formError, setFormError] = useState("");
 
   // Handle addition of a new patient record
-  const handleSubmitNewPatient = (e: React.FormEvent) => {
+  const handleSubmitNewPatient = async (e: React.FormEvent) => {
     e.preventDefault();
     if (
       !formName.trim() ||
@@ -73,7 +73,12 @@ export default function DataPasienView({
       registeredDate: new Date().toISOString().substring(0, 10),
     };
 
-    onAddPatient(newPatientObj);
+    try {
+      await onAddPatient(newPatientObj);
+    } catch (err: any) {
+      setFormError(err?.message || "Gagal menyimpan data pasien ke server.");
+      return;
+    }
 
     // Reset Form
     setFormName("");

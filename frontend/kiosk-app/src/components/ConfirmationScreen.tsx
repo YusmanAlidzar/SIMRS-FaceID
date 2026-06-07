@@ -79,7 +79,7 @@ export default function ConfirmationScreen({
                 {/* Big queue indicator code */}
                 <div className="text-center py-1.5" id="receipt-queue-indicator">
                   <span className="text-[9px] text-slate-400 font-bold block uppercase tracking-widest leading-none">NOMOR ANTRIAN</span>
-                  <span className="text-5xl font-black font-display text-slate-950 block tracking-tight leading-none my-1">A001</span>
+                  <span className="text-5xl font-black font-display text-slate-950 block tracking-tight leading-none my-1">{patientData.queueNumber || 'A001'}</span>
                 </div>
 
                 {/* Detail records */}
@@ -102,7 +102,7 @@ export default function ConfirmationScreen({
                   <div className="flex flex-col gap-0.5" id="receipt-field-waktu">
                     <span className="text-[8px] text-slate-400 uppercase tracking-wider">JADWAL KUNJUNGAN:</span>
                     <span className="text-[10px] font-semibold text-slate-600 uppercase">
-                      {currentDate} • {currentHour}
+                      {patientData.visitDate || currentDate} • {patientData.visitTime || currentHour}
                     </span>
                   </div>
                 </div>
@@ -181,7 +181,7 @@ export default function ConfirmationScreen({
                   <div className="grid grid-cols-3 p-4 items-center">
                     <span className="text-slate-400 font-bold uppercase font-display">Dokter Spesialis</span>
                     <span className="col-span-2 text-slate-700 font-medium font-mono">
-                      {selectedPoly ? selectedPoly.dokter : "dr. Andi Wijaya, Sp.A"}
+                      {patientData.ticketDoctor || (selectedPoly ? selectedPoly.dokter : "dr. Andi Wijaya, Sp.A")}
                     </span>
                   </div>
 

@@ -13,6 +13,9 @@ router.post('/auth/login', authController.loginManual);
 // Register patient with Face ID
 router.post('/auth/register-face', authController.registerPatientWithFace);
 
+// Register patient without Face ID
+router.post('/auth/register', authController.registerPatient);
+
 // Verify Face ID
 router.post('/auth/verify-face', authController.verifyFaceID);
 

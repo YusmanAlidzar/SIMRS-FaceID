@@ -128,14 +128,14 @@ export default function KunjunganHarianView({
     (a, b) => b[1] - a[1],
   );
 
-  const mainDistribution = sortedDistribution.slice(0, 3);
+  const mainDistribution = sortedDistribution.slice(0, 3) as [string, number][];
   const otherCount =
     totalDistribution -
     mainDistribution.reduce((sum, [, value]) => sum + value, 0);
 
-  const distributionEntries = [
+  const distributionEntries: [string, number][] = [
     ...mainDistribution,
-    ...(otherCount > 0 ? [["Lainnya", otherCount]] : []),
+    ...(otherCount > 0 ? ([['Lainnya', otherCount]] as [string, number][]) : []),
   ];
 
   // Calculate bento stats automatically

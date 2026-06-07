@@ -21,6 +21,11 @@ export interface PatientInfo {
   photoUrl?: string;
   poly: string;
   dokter: string;
+  ticketId?: string;
+  queueNumber?: string;
+  visitDate?: string;
+  visitTime?: string;
+  ticketDoctor?: string;
 }
 
 export interface Poliklinik {

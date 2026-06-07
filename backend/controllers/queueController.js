@@ -91,7 +91,8 @@ const getQueueByPoliklinik = async (req, res) => {
       const [visits] = await connection.query(`
         SELECT 
           v.id as ticketId,
-          SUBSTRING(v.id, -3) as queueNumber,
+          v.patient_id as patientId,
+          SUBSTR(v.id, -3) as queueNumber,
           p.name as patientName,
           p.gender,
           p.age,
@@ -131,7 +132,8 @@ const getCurrentQueue = async (req, res) => {
       const [visits] = await connection.query(`
         SELECT 
           v.id as ticketId,
-          SUBSTRING(v.id, -3) as queueNumber,
+          v.patient_id as patientId,
+          SUBSTR(v.id, -3) as queueNumber,
           p.name as patientName,
           p.gender,
           p.age,
@@ -183,7 +185,7 @@ const getPatientTicket = async (req, res) => {
       const [visits] = await connection.query(`
         SELECT 
           v.id as ticketId,
-          SUBSTRING(v.id, -3) as queueNumber,
+          SUBSTR(v.id, -3) as queueNumber,
           p.name as patientName,
           p.gender,
           p.age,
@@ -236,7 +238,7 @@ const updateQueueStatus = async (req, res) => {
         [status, ticket_id]
       );
 
-      if (result.affectedRows === 0) {
+      if (result.changes === 0) {
         return res.status(404).json({ error: 'Ticket not found' });
       }
 

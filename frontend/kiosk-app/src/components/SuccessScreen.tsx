@@ -94,16 +94,15 @@ export default function SuccessScreen({
 
               <div className="text-center my-1.5">
                 <p className="text-[6px] text-slate-400 leading-none">NO. ANTRIAN</p>
-                <p className="text-2xl font-black font-display text-slate-950 tracking-tight leading-none my-1">A001</p>
+                <p className="text-2xl font-black font-display text-slate-950 tracking-tight leading-none my-1">{patientData.queueNumber || 'A001'}</p>
               </div>
 
               <div className="space-y-1 text-[8px] leading-tight border-t border-dashed border-slate-200 pt-1.5 text-slate-600">
                 <p><span className="text-slate-400">Nama:</span> <span className="font-bold text-slate-900">{patientData.nama || "Budi Santoso"}</span></p>
                 <p><span className="text-slate-400">Poli:</span> <span className="font-bold text-emerald-800 uppercase">{selectedPoly ? selectedPoly.name : "Poli Umum"}</span></p>
-                <p><span className="text-slate-400">Waktu:</span> <span>{currentDate} • {currentHour}</span></p>
+                <p><span className="text-slate-400">Waktu:</span> <span>{patientData.visitDate || currentDate} • {patientData.visitTime || currentHour}</span></p>
               </div>
 
-              {/* Decorative mini barcode */}
               <div className="h-4 bg-slate-100 flex items-stretch gap-0.5 pointer-events-none mt-2">
                 {Array.from({ length: 28 }).map((_, idx) => (
                   <div key={idx} className="flex-1 bg-slate-800" style={{ height: `${(idx % 3 === 0 ? 90 : 50)}%` }} />

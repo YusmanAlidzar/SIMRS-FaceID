@@ -47,6 +47,41 @@ const loginManual = async (req, res) => {
   }
 };
 
+// ==================== HELPERS ====================
+
+const normalizeGender = (gender) => {
+  if (!gender || typeof gender !== 'string') return null;
+  const normalized = gender.trim().toLowerCase();
+  if (['l', 'laki-laki', 'laki laki', 'male'].includes(normalized)) {
+    return 'Laki-laki';
+  }
+  if (['p', 'perempuan', 'female', 'wanita'].includes(normalized)) {
+    return 'Perempuan';
+  }
+  return null;
+};
+
+const parseAgeValue = (age) => {
+  if (age == null) return null;
+  const numericAge = Number(age);
+  if (!Number.isNaN(numericAge)) return numericAge;
+  const match = String(age).match(/\d+/);
+  return match ? Number(match[0]) : null;
+};
+
+const calculateAgeFromBirthDate = (birthDate) => {
+  if (!birthDate) return null;
+  const parsedDate = new Date(birthDate);
+  if (Number.isNaN(parsedDate.getTime())) return null;
+  const today = new Date();
+  let age = today.getFullYear() - parsedDate.getFullYear();
+  const monthDiff = today.getMonth() - parsedDate.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < parsedDate.getDate())) {
+    age -= 1;
+  }
+  return age >= 0 ? age : null;
+};
+
 // ==================== REGISTER PASIEN DENGAN FACE ID ====================
 
 // Register pasien baru dengan data + Face encoding
@@ -61,6 +96,13 @@ const registerPatientWithFace = async (req, res) => {
     if (!face_encoding) {
       return res.status(400).json({ error: 'Face encoding is required' });
     }
+
+    const normalizedGender = normalizeGender(gender);
+    if (!normalizedGender) {
+      return res.status(400).json({ error: 'Invalid gender value' });
+    }
+
+    const computedAge = age || calculateAgeFromBirthDate(birth_date);
 
     const connection = await getConnection();
     try {
@@ -77,13 +119,85 @@ const registerPatientWithFace = async (req, res) => {
       const [result] = await connection.query(
         `INSERT INTO patients (id, name, nik, gender, age, birth_date, address, phone, photo_url, face_encoding, status) 
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        [id, name, nik, gender, age, birth_date, address, phone, photo_url, face_encoding, 'Outpatient']
+        [id, name, nik, normalizedGender, computedAge, birth_date, address, phone, photo_url, face_encoding, 'Outpatient']
       );
 
       res.status(201).json({
         success: true,
         message: 'Patient registered successfully with Face ID',
         patientId: id
+      });
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error('Register patient error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+};
+
+// ==================== REGISTER PASIEN TANPA FACE ID ====================
+
+const registerPatient = async (req, res) => {
+  try {
+    const {
+      id,
+      name,
+      nik,
+      gender,
+      age,
+      birth_date,
+      tanggalLahir,
+      address,
+      phone,
+      photo_url,
+      face_encoding,
+    } = req.body;
+
+    const patientId = id || nik;
+    const patientName = name;
+    const patientNik = nik || patientId;
+    const patientGender = normalizeGender(gender);
+    const birthDateValue = birth_date || tanggalLahir;
+    const computedAge = parseAgeValue(age) || calculateAgeFromBirthDate(birthDateValue);
+
+    if (!patientId || !patientName || !patientGender) {
+      return res.status(400).json({ error: 'Missing required fields: id/nik, name, gender' });
+    }
+
+    const connection = await getConnection();
+    try {
+      const [existingPatient] = await connection.query(
+        'SELECT id FROM patients WHERE id = ? OR nik = ?',
+        [patientId, patientNik]
+      );
+
+      if (existingPatient.length > 0) {
+        return res.status(409).json({ error: 'Patient already exists' });
+      }
+
+      await connection.query(
+        `INSERT INTO patients (id, name, nik, gender, age, birth_date, address, phone, photo_url, face_encoding, status)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        [
+          patientId,
+          patientName,
+          patientNik,
+          patientGender,
+          computedAge,
+          birthDateValue,
+          address,
+          phone,
+          photo_url,
+          face_encoding || null,
+          'Outpatient',
+        ],
+      );
+
+      res.status(201).json({
+        success: true,
+        message: 'Patient registered successfully',
+        patientId,
       });
     } finally {
       connection.release();
@@ -170,7 +284,7 @@ const updateFaceEncoding = async (req, res) => {
         [face_encoding, patient_id]
       );
 
-      if (result.affectedRows === 0) {
+      if (result.changes === 0) {
         return res.status(404).json({ error: 'Patient not found' });
       }
 
@@ -278,6 +392,7 @@ const calculateFaceDistance = (encoding1, encoding2) => {
 module.exports = {
   loginManual,
   registerPatientWithFace,
+  registerPatient,
   verifyFaceID,
   updateFaceEncoding,
   getPatientInfo,

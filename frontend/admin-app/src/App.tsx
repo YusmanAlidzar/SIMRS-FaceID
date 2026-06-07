@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
 import DashboardView from "./components/DashboardView";
@@ -13,6 +13,7 @@ import {
   INITIAL_VISITS,
   INITIAL_NOTIFICATIONS,
 } from "./mockData";
+import { registerPatient } from "./api";
 
 export default function App() {
   // Session User Role (null implies requiring Login)
@@ -36,10 +37,76 @@ export default function App() {
   // Search filter query (handled in the Header search inputs)
   const [searchQuery, setSearchQuery] = useState("");
 
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+  const POLLING_INTERVAL_MS = 5000;
+
   // Modals / Details focus states
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [selectedVisit, setSelectedVisit] = useState<Visit | null>(null);
   const [showAddPatientModal, setShowAddPatientModal] = useState(false);
+
+  useEffect(() => {
+    if (!user) return;
+
+    let isMounted = true;
+    const fetchAdminData = async () => {
+      try {
+        const [patientsResponse, queueResponse] = await Promise.all([
+          fetch(`${API_BASE_URL}/patients`),
+          fetch(`${API_BASE_URL}/queue/current`),
+        ]);
+
+        if (!patientsResponse.ok) {
+          throw new Error(`Failed to fetch patients: ${patientsResponse.status}`);
+        }
+        if (!queueResponse.ok) {
+          throw new Error(`Failed to fetch queue: ${queueResponse.status}`);
+        }
+
+        const patientsData = await patientsResponse.json();
+        const queueData = await queueResponse.json();
+
+        const mappedPatients: Patient[] = patientsData.map((item: any) => ({
+          id: item.id,
+          name: item.name,
+          gender: item.gender,
+          age: item.age != null ? `${item.age}th` : "0th",
+          address: item.address || "",
+          phone: item.phone || "",
+          status: item.status || "Outpatient",
+          registeredDate: item.registered_date
+            ? item.registered_date.substring(0, 10)
+            : new Date().toISOString().substring(0, 10),
+        }));
+
+        const mappedVisits: Visit[] = Object.values(queueData.byPoliklinik || {}).flat().map((item: any) => ({
+          id: item.ticketId,
+          patientId: item.patientId || "",
+          patientName: item.patientName,
+          gender: item.gender,
+          age: item.age != null ? `${item.age}th` : "0th",
+          time: item.time || "",
+          poliklinik: item.poliklinik || "Poli Umum",
+          doctor: item.doctor || "",
+          status: item.status || "Antri",
+          date: item.visitDate || queueData.date || new Date().toISOString().split("T")[0],
+        }));
+
+        if (!isMounted) return;
+        setPatients(mappedPatients);
+        setVisits(mappedVisits);
+      } catch (error) {
+        console.error("Admin data load error:", error);
+      }
+    };
+
+    fetchAdminData();
+    const polling = window.setInterval(fetchAdminData, POLLING_INTERVAL_MS);
+    return () => {
+      isMounted = false;
+      window.clearInterval(polling);
+    };
+  }, [API_BASE_URL, user]);
 
   // Handle successful login
   const handleLoginSuccess = (profile: {
@@ -55,33 +122,42 @@ export default function App() {
     setActiveTab("dashboard");
   };
 
-  // Register a patient and automatically queue a visit for them
-  const handleAddPatient = (newPatient: Patient) => {
-    setPatients((prev) => [newPatient, ...prev]);
+  const parseAgeValue = (ageString: string) => {
+    const digits = ageString.match(/\d+/);
+    if (!digits) return undefined;
+    const ageNumber = Number(digits[0]);
+    return Number.isFinite(ageNumber) ? ageNumber : undefined;
+  };
 
-    // Create a corresponding visit
-    const indexSuffix = visits.length + 101;
-    const todayDate = new Date().toISOString().split("T")[0];
-    const associatedVisit: Visit = {
-      id: `RM-2023-00${indexSuffix}`,
-      patientId: newPatient.id,
-      patientName: newPatient.name,
+  // Register a patient on the backend and update the dashboard state
+  const handleAddPatient = async (newPatient: Patient) => {
+    const payload = {
+      id: newPatient.id,
+      name: newPatient.name,
+      nik: newPatient.id,
       gender: newPatient.gender,
-      age: newPatient.age,
-      time: "10:30 WIB",
-      poliklinik: "Poli Umum",
-      doctor: "Dr. Andi Pratama",
-      status: "Antri",
-      date: todayDate,
+      age: parseAgeValue(newPatient.age),
+      address: newPatient.address,
+      phone: newPatient.phone || "",
+      photo_url: "",
     };
 
-    setVisits((prev) => [associatedVisit, ...prev]);
+    try {
+      await registerPatient(payload);
+      setPatients((prev) => [newPatient, ...prev]);
+    } catch (error: any) {
+      console.error("Admin patient registration failed:", error);
+      window.alert(
+        `Gagal menyimpan pasien ke server: ${error?.message || "Unknown error"}`,
+      );
+      return;
+    }
 
     // Push system alert notification
     const newAlert: NotificationItem = {
       id: `notif-${Date.now()}`,
       title: "Pasien Baru Terdaftar",
-      description: `${newPatient.name} telah didaftarkan ke Poli Umum.`,
+      description: `${newPatient.name} telah didaftarkan ke sistem.`,
       type: "info",
       time: "Just now",
     };

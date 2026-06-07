@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { 
   ScreenType, PatientInfo, Poliklinik, POLIKLINIK_LIST 
 } from "./types";
+import { registerPatient, generateQueueTicket } from "./api";
 import WelcomeScreen from "./components/WelcomeScreen";
 import PolySelectionModal from "./components/PolySelectionModal";
 import MethodChoiceScreen from "./components/MethodChoiceScreen";
@@ -45,6 +46,7 @@ export default function App() {
   
   // Storage for currently entered patient data
   const [patientData, setPatientData] = useState<PatientInfo>({ ...DEFAULT_PATIENT });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Handle department/poly selection from the modal
   const handleSelectPoly = (poly: Poliklinik) => {
@@ -64,6 +66,77 @@ export default function App() {
     setCurrentScreen("INITIAL_WELCOME");
     setSelectedPoly(null);
     setPatientData({ ...DEFAULT_PATIENT });
+    setIsSubmitting(false);
+  };
+
+  const getPatientAge = (birthDate: string) => {
+    if (!birthDate) return undefined;
+    const parsed = new Date(birthDate);
+    if (Number.isNaN(parsed.getTime())) return undefined;
+    const today = new Date();
+    let age = today.getFullYear() - parsed.getFullYear();
+    const monthDiff = today.getMonth() - parsed.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < parsed.getDate())) {
+      age -= 1;
+    }
+    return age >= 0 ? age : undefined;
+  };
+
+  const normalizeKioskGender = (gender: string) => {
+    return gender === "L" || gender === "l" ? "Laki-laki" : gender === "P" || gender === "p" ? "Perempuan" : gender;
+  };
+
+  const handleRegisterAndQueue = async () => {
+    if (!selectedPoly) {
+      setCurrentScreen("INITIAL_WELCOME");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const formattedGender = normalizeKioskGender(patientData.jenisKelamin);
+      const payload = {
+        id: patientData.nik,
+        name: patientData.nama,
+        nik: patientData.nik,
+        gender: formattedGender,
+        birth_date: patientData.tanggalLahir,
+        address: patientData.alamat,
+        phone: patientData.telepon,
+        photo_url: patientData.photoUrl,
+        face_encoding: null,
+      };
+
+      try {
+        await registerPatient(payload);
+      } catch (err: any) {
+        if (!err.message.includes('Patient already exists')) {
+          console.error('Registration error', err);
+          throw err;
+        }
+      }
+
+      const queueResponse = await generateQueueTicket({
+        patient_id: patientData.nik,
+        poliklinik_id: selectedPoly.id,
+        visit_date: new Date().toISOString().split('T')[0],
+      });
+
+      setPatientData((prev) => ({
+        ...prev,
+        ticketId: queueResponse.ticket?.ticketId,
+        queueNumber: queueResponse.ticket?.queueNumber,
+        visitDate: queueResponse.ticket?.visitDate,
+        visitTime: queueResponse.ticket?.visitTime,
+        ticketDoctor: queueResponse.ticket?.doctor,
+      }));
+      setCurrentScreen('TICKET_CONFIRMATION');
+    } catch (error) {
+      console.error('Failed to register and queue patient:', error);
+      window.alert('Gagal menghubungkan ke server. Silakan coba lagi.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Screen state router render
@@ -166,7 +239,7 @@ export default function App() {
             patientData={patientData}
             onBack={() => setCurrentScreen("REGISTER_FORM")}
             onRetakeFacePhoto={() => setCurrentScreen("FACE_REGISTRATION")}
-            onConfirm={() => setCurrentScreen("TICKET_CONFIRMATION")}
+            onConfirm={handleRegisterAndQueue}
           />
         );
 
