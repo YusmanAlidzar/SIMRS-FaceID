@@ -46,5 +46,5 @@ git checkout -b fitur/nama-fitur
 git pull origin main
 ```
 
-## Database
+## Cek Database
 Terminal: `d:\AppsData\VSCode\tubes-rpl-kel-4\SIMRS-FaceID\.venv\Scripts\python.exe inspect_db.py`
