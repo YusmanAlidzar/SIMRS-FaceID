@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { 
   ScreenType, PatientInfo, Poliklinik, POLIKLINIK_LIST 
 } from "./types";
@@ -47,6 +47,7 @@ export default function App() {
   // Storage for currently entered patient data
   const [patientData, setPatientData] = useState<PatientInfo>({ ...DEFAULT_PATIENT });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const submitLockRef = useRef(false);
 
   // Handle department/poly selection from the modal
   const handleSelectPoly = (poly: Poliklinik) => {
@@ -67,6 +68,7 @@ export default function App() {
     setSelectedPoly(null);
     setPatientData({ ...DEFAULT_PATIENT });
     setIsSubmitting(false);
+    submitLockRef.current = false;
   };
 
   const getPatientAge = (birthDate: string) => {
@@ -91,6 +93,12 @@ export default function App() {
       setCurrentScreen("INITIAL_WELCOME");
       return false;
     }
+
+    if (submitLockRef.current) {
+      return false;
+    }
+
+    submitLockRef.current = true;
 
     setIsSubmitting(true);
     try {
@@ -141,6 +149,7 @@ export default function App() {
       return false;
     } finally {
       setIsSubmitting(false);
+      submitLockRef.current = false;
     }
   };
 
@@ -256,6 +265,7 @@ export default function App() {
             patientData={patientData}
             onBack={() => setCurrentScreen("REGISTER_FORM")}
             onRetakeFacePhoto={() => setCurrentScreen("FACE_REGISTRATION")}
+            isSubmitting={isSubmitting}
             onConfirm={handleRegisterAndQueue}
           />
         );
@@ -284,6 +294,7 @@ export default function App() {
             selectedPoly={selectedPoly}
             patientData={patientData}
             onCancel={() => setCurrentScreen("LOGIN_CHOICE")}
+            isSubmitting={isSubmitting}
             onConfirm={handleConfirmTicket}
           />
         );

@@ -10,6 +10,7 @@ interface RegistrationReviewProps {
   onBack: () => void;
   onRetakeFacePhoto: () => void;
   onConfirm: () => void;
+  isSubmitting?: boolean;
 }
 
 export default function RegistrationReview({
@@ -18,6 +19,7 @@ export default function RegistrationReview({
   onBack,
   onRetakeFacePhoto,
   onConfirm,
+  isSubmitting = false,
 }: RegistrationReviewProps) {
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col justify-between p-6 md:p-10" id="reg-review-screen">
@@ -143,11 +145,12 @@ export default function RegistrationReview({
             <span className="text-[10px] text-slate-400 font-mono leading-none">KONFIRMASI AKHIR REGISTRASI MANDIRI</span>
             <button 
               onClick={onConfirm}
-              className="px-8 py-4 bg-[#1B1B1B] text-white hover:bg-slate-800 rounded-full font-bold text-sm tracking-wide transition cursor-pointer flex items-center gap-2 shadow-md active:scale-[0.98]"
+              disabled={isSubmitting}
+              className={`px-8 py-4 rounded-full font-bold text-sm tracking-wide transition flex items-center gap-2 shadow-md active:scale-[0.98] ${isSubmitting ? "bg-slate-400 text-white cursor-not-allowed" : "bg-[#1B1B1B] text-white hover:bg-slate-800 cursor-pointer"}`}
               id="btn-review-confirm-simpan"
             >
               <Check className="w-4.5 h-4.5 text-teal-400" />
-              <span>Simpan & Konfirmasi Data</span>
+              <span>{isSubmitting ? "Menyimpan..." : "Simpan & Konfirmasi Data"}</span>
             </button>
           </div>
         </div>

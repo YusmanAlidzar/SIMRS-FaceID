@@ -8,6 +8,7 @@ interface ConfirmationScreenProps {
   patientData: PatientInfo;
   onCancel: () => void;
   onConfirm: () => void;
+  isSubmitting?: boolean;
 }
 
 export default function ConfirmationScreen({
@@ -15,6 +16,7 @@ export default function ConfirmationScreen({
   patientData,
   onCancel,
   onConfirm,
+  isSubmitting = false,
 }: ConfirmationScreenProps) {
   const currentDate = new Date().toLocaleDateString("id-ID", {
     day: "numeric",
@@ -79,7 +81,7 @@ export default function ConfirmationScreen({
                 {/* Big queue indicator code */}
                 <div className="text-center py-1.5" id="receipt-queue-indicator">
                   <span className="text-[9px] text-slate-400 font-bold block uppercase tracking-widest leading-none">NOMOR ANTRIAN</span>
-                  <span className="text-5xl font-black font-display text-slate-950 block tracking-tight leading-none my-1">{patientData.queueNumber || 'A001'}</span>
+                  <span className="text-5xl font-black font-display text-slate-950 block tracking-tight leading-none my-1">{patientData.queueNumber || `${selectedPoly?.code || 'UMM'}001`}</span>
                 </div>
 
                 {/* Detail records */}
@@ -211,9 +213,10 @@ export default function ConfirmationScreen({
 
             <button 
               onClick={onConfirm}
-              className="px-10 py-3.5 bg-[#1B1B1B] hover:bg-slate-800 text-white font-extrabold text-sm uppercase tracking-wider rounded-xl cursor-pointer transition shadow-md active:scale-[0.98]"
+              disabled={isSubmitting}
+              className={`px-10 py-3.5 font-extrabold text-sm uppercase tracking-wider rounded-xl transition shadow-md active:scale-[0.98] ${isSubmitting ? "bg-slate-400 text-white cursor-not-allowed" : "bg-[#1B1B1B] hover:bg-slate-800 text-white cursor-pointer"}`}
             >
-              ya, konfirmasi
+              {isSubmitting ? "memproses..." : "ya, konfirmasi"}
             </button>
           </div>
 

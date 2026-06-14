@@ -23,6 +23,7 @@ export default function FaceScanView({
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasContainerRef = useRef<HTMLDivElement | null>(null);
   const scanIntervalRef = useRef<number | null>(null);
+  const captureLockRef = useRef(false);
   
   const [scanState, setScanState] = useState<"IDLE" | "SCANNING" | "COMPLETED">("IDLE");
   const [statusText, setStatusText] = useState("Memuat sistem biometrik offline...");
@@ -34,6 +35,21 @@ export default function FaceScanView({
     if (scanIntervalRef.current !== null) {
       window.clearInterval(scanIntervalRef.current);
       scanIntervalRef.current = null;
+    }
+  };
+
+  const stopCameraStream = () => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    try {
+      const stream = video.srcObject as MediaStream | null;
+      if (stream) {
+        stream.getTracks().forEach((track) => track.stop());
+      }
+      video.srcObject = null;
+    } catch (e) {
+      console.warn('Failed to stop camera stream', e);
     }
   };
 
@@ -95,13 +111,20 @@ export default function FaceScanView({
     setScanState("SCANNING");
     setScanAligned(false);
     setStatusText("Posisi wajah di tengah kotak. Tahan...");
+    captureLockRef.current = false;
     
     clearScanInterval();
     removeExistingCanvas();
 
     // @ts-ignore
     const faceapi = window.faceapi;
-    const canvas = faceapi.createCanvasFromMedia(videoRef.current);
+    const video = videoRef.current;
+    if (!video) {
+      setStatusText("Kamera belum siap. Coba lagi.");
+      return;
+    }
+
+    const canvas = faceapi.createCanvasFromMedia(video);
     canvas.style.position = 'absolute';
     canvas.style.top = '0';
     canvas.style.left = '0';
@@ -111,21 +134,26 @@ export default function FaceScanView({
       canvasContainerRef.current.appendChild(canvas);
     }
     
-    const displaySize = { width: videoRef.current!.clientWidth, height: videoRef.current!.clientHeight };
+    const displaySize = { width: video.clientWidth, height: video.clientHeight };
     faceapi.matchDimensions(canvas, displaySize);
 
     scanIntervalRef.current = window.setInterval(async () => {
-      if (!videoRef.current) return;
+      const activeVideo = videoRef.current;
+      if (!activeVideo || captureLockRef.current) return;
 
       const detectionOptions = new faceapi.TinyFaceDetectorOptions({ scoreThreshold: FACE_DETECTION_THRESHOLD });
       const detections = await faceapi.detectAllFaces(
-        videoRef.current, 
+        activeVideo, 
         detectionOptions
       ).withFaceLandmarks();
       
       const resizedDetections = faceapi.resizeResults(detections, displaySize);
       const context = canvas.getContext('2d');
       context?.clearRect(0, 0, canvas.width, canvas.height);
+
+      if (resizedDetections.length > 0) {
+        faceapi.draw.drawDetections(canvas, resizedDetections);
+      }
       
       if (detections.length > 0 && resizedDetections.length > 0) {
         const box = resizedDetections[0].detection.box;
@@ -139,38 +167,33 @@ export default function FaceScanView({
         const isValidFace = isCentered && isHeightValid && isWidthValid;
 
         if (isValidFace) {
+          captureLockRef.current = true;
+          clearScanInterval();
           setScanAligned(true);
           setStatusText("Wajah sudah sesuai petunjuk scan. Mengambil foto...");
 
           // Capture current video frame
-          const video = videoRef.current!;
+          const captureVideo = videoRef.current;
+          if (!captureVideo) {
+            captureLockRef.current = false;
+            setStatusText("Kamera tidak tersedia. Silakan ulangi scan.");
+            return;
+          }
+
           const tmpCanvas = document.createElement('canvas');
-          tmpCanvas.width = video.videoWidth || displaySize.width;
-          tmpCanvas.height = video.videoHeight || displaySize.height;
+          tmpCanvas.width = captureVideo.videoWidth || displaySize.width;
+          tmpCanvas.height = captureVideo.videoHeight || displaySize.height;
           const tmpCtx = tmpCanvas.getContext('2d');
           if (tmpCtx) {
             tmpCtx.scale(-1, 1);
             tmpCtx.translate(-tmpCanvas.width, 0);
-            tmpCtx.drawImage(video, 0, 0, tmpCanvas.width, tmpCanvas.height);
+            tmpCtx.drawImage(captureVideo, 0, 0, tmpCanvas.width, tmpCanvas.height);
             const dataUrl = tmpCanvas.toDataURL('image/jpeg');
             setCapturedPhoto(dataUrl);
-            if (onScanComplete) onScanComplete(dataUrl);
           }
 
           setScanState("COMPLETED");
-          if (scanIntervalRef.current !== null) {
-            window.clearInterval(scanIntervalRef.current);
-            scanIntervalRef.current = null;
-          }
-
-          // Stop camera stream to release device
-          try {
-            const stream = videoRef.current!.srcObject as MediaStream | null;
-            if (stream) stream.getTracks().forEach((t) => t.stop());
-            videoRef.current!.srcObject = null;
-          } catch (e) {
-            console.warn('Failed to stop camera stream', e);
-          }
+          stopCameraStream();
         } else {
           setScanAligned(false);
           setStatusText("Arahkan wajah ke tengah oval sesuai petunjuk.");
@@ -186,6 +209,8 @@ export default function FaceScanView({
     setScanState("SCANNING");
     setScanAligned(false);
     setStatusText("Posisi wajah di tengah kotak. Tahan...");
+    setCapturedPhoto(null);
+    captureLockRef.current = false;
 
     if (videoRef.current) {
       videoRef.current.play().catch(() => {});
@@ -199,12 +224,16 @@ export default function FaceScanView({
   React.useEffect(() => {
     return () => {
       clearScanInterval();
+      stopCameraStream();
     };
   }, []);
 
   const handleContinue = () => {
-    // Simulasi mengirim URL foto sementara ke komponen berikutnya
-    onScanComplete("https://via.placeholder.com/150"); 
+    if (!capturedPhoto || scanState !== "COMPLETED") {
+      return;
+    }
+
+    onScanComplete(capturedPhoto);
   };
 
   return (
@@ -314,8 +343,8 @@ export default function FaceScanView({
 
              <button 
                 onClick={handleContinue}
-                disabled={scanState !== "COMPLETED"}
-                className={`px-8 py-3 font-bold rounded-xl flex items-center gap-2 justify-center transition ${scanState === "COMPLETED" ? "bg-[#1B1B1B] text-white" : "bg-slate-200 text-slate-400 cursor-not-allowed"}`}
+               disabled={scanState !== "COMPLETED" || !capturedPhoto}
+               className={`px-8 py-3 font-bold rounded-xl flex items-center gap-2 justify-center transition ${scanState === "COMPLETED" && capturedPhoto ? "bg-[#1B1B1B] text-white" : "bg-slate-200 text-slate-400 cursor-not-allowed"}`}
              >
                 <Save className="w-4 h-4" /> Simpan & Lanjutkan
              </button>

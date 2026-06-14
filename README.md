@@ -47,4 +47,6 @@ git pull origin main
 ```
 
 ## Cek Database
-Terminal: `d:\AppsData\VSCode\tubes-rpl-kel-4\SIMRS-FaceID\.venv\Scripts\python.exe inspect_db.py`
+Terminal:
+`cd backend`
+`.\.venv\Scripts\python.exe inspect_db.py`

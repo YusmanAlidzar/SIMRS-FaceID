@@ -26,7 +26,7 @@ const generateQueueTicket = async (req, res) => {
       const patient = patients[0];
 
       const [polikliniks] = await connection.query(
-        'SELECT id, name, doctor_name FROM poliklinik WHERE id = ?',
+        'SELECT id, name, code, doctor_name FROM poliklinik WHERE id = ?',
         [poliklinik_id]
       );
 
@@ -42,7 +42,8 @@ const generateQueueTicket = async (req, res) => {
         [poliklinik_id, visit_date]
       );
 
-      const queueNumber = (queueStats[0].count + 1).toString().padStart(3, '0');
+      const queueSequence = (queueStats[0].count + 1).toString().padStart(3, '0');
+      const queueNumber = `${poliklinik.code}${queueSequence}`;
       const ticketId = `${poliklinik_id.toUpperCase()}-${visit_date.replace(/-/g, '')}-${queueNumber}`;
       const visitTime = new Date().toTimeString().split(' ')[0]; // Current time
 
@@ -67,6 +68,7 @@ const generateQueueTicket = async (req, res) => {
         ticket: {
           ticketId,
           queueNumber,
+          queueSequence,
           patientName: patient.name,
           gender: patient.gender,
           age: patient.age,

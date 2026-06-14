@@ -94,7 +94,7 @@ export default function SuccessScreen({
 
               <div className="text-center my-1.5">
                 <p className="text-[6px] text-slate-400 leading-none">NO. ANTRIAN</p>
-                <p className="text-2xl font-black font-display text-slate-950 tracking-tight leading-none my-1">{patientData.queueNumber || 'A001'}</p>
+                <p className="text-2xl font-black font-display text-slate-950 tracking-tight leading-none my-1">{patientData.queueNumber || `${selectedPoly?.code || 'UMM'}001`}</p>
               </div>
 
               <div className="space-y-1 text-[8px] leading-tight border-t border-dashed border-slate-200 pt-1.5 text-slate-600">
