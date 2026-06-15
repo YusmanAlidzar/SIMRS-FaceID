@@ -14,7 +14,7 @@ SIMRS-FaceID adalah sistem registrasi pasien untuk SIMRSUD yang memanfaatkan tek
 
 ## Cara Menjalankan
 1. Pastikan Node.js sudah terpasang.
-2. Buka terminal untuk `admin-app`:
+2. Buka terminal untuk `admin-app` (pass: `Admin123`):
    - `cd frontend/admin-app`
    - `npm install`
    - `npm run dev`
@@ -24,6 +24,11 @@ SIMRS-FaceID adalah sistem registrasi pasien untuk SIMRSUD yang memanfaatkan tek
    - `npm install`
    - `npm run dev`
    - buka `http://localhost:3000/`
+4. Buka terminal untuk `Connect Database`
+   - `cd backend`
+   - `npm start`
+5. Buka terminal untuk `Database SQLite (CLI)`
+   - `.\.venv\Scripts\python.exe inspect_db.py`
 
 ## Fitur Utama
 - Registrasi pasien dengan verifikasi wajah.
@@ -32,7 +37,7 @@ SIMRS-FaceID adalah sistem registrasi pasien untuk SIMRSUD yang memanfaatkan tek
 - Form identitas pasien dan review registrasi.
 
 ## Catatan
-- Pastikan `frontend/kiosk-app/public/models` berisi model Face API yang diperlukan.
+- Pastikan `frontend/kiosk-app/public/models` berisi model Face API yang diperlukan (`face-api.min.js`, dll.).
 - Jika menggunakan database lokal, sesuaikan konfigurasi di `backend/` dan `database/schema.sql`.
 
 ## Git
@@ -45,8 +50,3 @@ git push origin main
 git checkout -b fitur/nama-fitur
 git pull origin main
 ```
-
-## Cek Database
-Terminal:
-`cd backend`
-`.\.venv\Scripts\python.exe inspect_db.py`

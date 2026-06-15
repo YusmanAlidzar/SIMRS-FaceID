@@ -29,7 +29,9 @@ export const registerPatient = async (payload: RegisterPatientPayload) => {
   const data = await response.json();
   if (!response.ok) {
     const error = data?.error || `Registration failed (${response.status})`;
-    throw new Error(error);
+    const err: any = new Error(error);
+    err.status = response.status;
+    throw err;
   }
   return data;
 };

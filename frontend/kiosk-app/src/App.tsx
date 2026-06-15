@@ -118,7 +118,9 @@ export default function App() {
       try {
         await registerPatient(payload);
       } catch (err: any) {
-        if (!err.message.includes('Patient already exists')) {
+        if (String(err?.message || '').includes('Patient already exists')) {
+          // no-op
+        } else {
           console.error('Registration error', err);
           throw err;
         }
